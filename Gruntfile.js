@@ -123,8 +123,7 @@ module.exports = function (grunt) {
 				options: {
 					vendor: ['<%=meta.ng_lib%>'],
 					specs: 'test/statify-ng-specs.js',
-					styles: 'test/statify-specs.css',
-					keepRunner:true
+					styles: 'test/statify-specs.css'
 				}
 
 			}

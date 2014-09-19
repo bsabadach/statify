@@ -719,10 +719,11 @@ var statify = (function(root) {
 
             statesContext.container = $el;
 
+
             //default properties initialization
             _.extend(statesContext, _defaults);
 
-            // assign options from options object by default
+            // assign statesContext options with options object
             _.extend(statesContext, options);
 
             //sets the initial state for the container: by default the first in the list
@@ -738,8 +739,11 @@ var statify = (function(root) {
             });
 
 
-            fetchElements = _.isArray(options.elements) ? _fromOptions : _fromDOM;
-            statesContext.elements = fetchElements($el, options);
+            if (_.isArray(options.elements)) {
+                statesContext.elements = _fromOptions($el, statesContext.elements);
+            } else {
+                statesContext.elements = _fromDOM($el, statesContext.deepFetch);
+            }
 
             statesContext.container = statesContext.container || $el;
             return statesContext;
@@ -749,13 +753,13 @@ var statify = (function(root) {
         /**
          * build the statesContext element list from options hash: here the only task is to transform string selector into jQuery object or equivallent
          */
-        function _fromOptions($container, options) {
+        function _fromOptions($container, elements) {
             var elementsList = [],
                 _ = core._,
                 $ = core.$,
                 $el;
 
-            _.each(options.elements, function(elDescriptor) {
+            _.each(elements, function(elDescriptor) {
                 if (!_.isObject(elDescriptor.$el)) {
                     $el = $(elDescriptor.el, $container);
                     elDescriptor.$el = $el;
@@ -773,13 +777,12 @@ var statify = (function(root) {
         /**
          * build a statesContext element list from DOM states attributes declarations : data-states-*
          */
-        function _fromDOM($statesContainer, options) {
+        function _fromDOM($statesContainer, deepFetch) {
             var elementsList = [],
                 key,
                 $elements,
                 elDef,
                 $child,
-                deepFetch = options.deepFetch,
                 _ = core._,
                 $ = core.$;
 
@@ -857,11 +860,14 @@ var statify = (function(root) {
         };
 
         var manageStates = function(states) {
-            var _ = core._;
+            var _ = core._,
+                stateManagerOptions = {
+                    reverseTrans: this.statesContext.reverseTrans
+                };
             this.stateManager = new ViewStatesManager({
                 client: this,
                 states: states
-            }, this.options);
+            }, stateManagerOptions);
             this.$el.on(_events.join(" "), _.bind(this.onStateEvent, this));
         };
 
@@ -878,7 +884,7 @@ var statify = (function(root) {
                 this.onStateEvent(event, stateName);
                 return;
             }
-            this.fn.call(this.$el, event, stateName);
+            fn.call(this.$el, event, stateName);
         };
 
         /**
@@ -937,13 +943,13 @@ var statify = (function(root) {
     //---------------------------------------------------------------------------------
 
     $.fn.statify = function(options) {
-        if (!$.data(this, statify.ns)) return this;
+        if ($.data(this, statify.ns)) return this;
 
         var statesClient = {};
 
         statesClient.$el = $(this);
 
-        statesClient.statesOptions = options || {};
+        statesClient.options = options || {};
 
         $.extend(statesClient, statify.StatesClientMixin);
 

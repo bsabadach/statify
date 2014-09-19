@@ -17,13 +17,13 @@
     //---------------------------------------------------------------------------------
 
     $.fn.statify = function(options) {
-        if (!$.data(this, statify.ns)) return this;
+        if ($.data(this, statify.ns)) return this;
 
         var statesClient = {};
 
         statesClient.$el = $(this);
 
-        statesClient.statesOptions = options || {};
+        statesClient.options = options || {};
 
         $.extend(statesClient, statify.StatesClientMixin);
 

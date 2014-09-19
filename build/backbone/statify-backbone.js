@@ -1,3 +1,8 @@
+//
+// statify - v0.1.0
+// The MIT License
+// Copyright (c) 2014 Boris Sabadach <boris@washmatique.fr> 
+//
 var statify = (function(root) {
 
     "use strict";
@@ -7,26 +12,39 @@ var statify = (function(root) {
         CSSStyleRule = root.CSSStyleRule,
         CSSRule = root.CSSRule,
         setTimeout = root.setTimeout,
-        _core = {};
+        core = {};
 
 
     //-------------------------------------
     // configuration
     //-------------------------------------
 
-    _core.VERSION = "0.1.0";
+    core.VERSION = "0.1.0";
 
 
-    _core.ns = "washm.statify";
+    core.ns = "washm.statify";
 
 
-    _core.config = {
-        stateAttr: "data-states",
-        inAttr: "data-states-inc",
-        outAttr: "data-states-exc",
-        cssModifier: "-",
-        triggerFunction: "trigger"
+    core.config = {
+        attr: {
+            states: "data-states",
+            inc: "data-states-inc",
+            exc: "data-states-exc"
+        },
+        optionsAttr: {
+            initial: "data-states-initial",
+            keepLayout: "data-states-keepLayout",
+            includeRoot: "data-states-includeRoot",
+            deepFetch: "data-states-deepFetch",
+            reverseTrans: "data-states-reverseTrans",
+        },
+        cssModifier: "--",
+        triggerFn: "trigger"
     };
+
+
+    // turn off debug by default
+    core.DEBUG = false;
 
 
     //-------------------------------------
@@ -34,37 +52,32 @@ var statify = (function(root) {
     //-------------------------------------
 
 
-    // turn off debug by default
-    _core.DEBUG = true;
-
-
     // debug function
-    _core._debug = (function() {
+    core._debug = (function() {
         var join = [].join,
             canLog = console && console.log;
         return function() {
-            return canLog && _core.DEBUG && console.log(join.call(arguments, ','));
+            return canLog && core.DEBUG && console.log(join.call(arguments, ','));
         };
     }());
 
-    var _notImplemented = function(name) {
+    // noop function with debug
+    var notImplemented = function(name) {
         return function() {
-            _core._debug(name + "  is not implemented");
+            core._debug(name + "  is not implemented");
         };
     };
 
     // define util functions used in the project
     var utilMethods = ["isFunction", "isArray", "find", "indexOf", "each", "difference", "keys", "isObject", "extend", "bind"];
 
-    _core._ = {};
+    core._ = {};
 
     // add them do _ variable and mark them as not implemented
     for (var i in utilMethods) {
-        _core._[utilMethods[i]] = _notImplemented(utilMethods[i]);
+        core._[utilMethods[i]] = notImplemented(utilMethods[i]);
     }
 
-    // turn off debug by default
-    _core.DEBUG = true;
 
 
     /**
@@ -72,7 +85,7 @@ var statify = (function(root) {
      * @type {*}
      */
     if (typeof String.prototype.trim !== "function") {
-        String.prototype.trim = _core._.trim || _core.$.trim;
+        String.prototype.trim = core._.trim || core.$.trim;
     }
 
 
@@ -80,13 +93,14 @@ var statify = (function(root) {
      * CSS utilities
      * @type {*}
      */
-    _core.CSS = (function(document, core) {
+    core.CSS = (function(document, core) {
         var _hasSheets = true,
             _stylesCache = {},
             _acceptedMediaTypes = ["screen", "all", ""],
             _durationsCache = {};
 
         return {
+
             transitions: (function() {
                 var el = document.createElement('div'),
                     transProps = ['transition', 'OTransition', 'MSTransition', 'MozTransition', 'WebkitTransition'],
@@ -224,7 +238,7 @@ var statify = (function(root) {
             }
         };
 
-    }(document, _core));
+    }(document, core));
 
 
     //-------------------------------------
@@ -232,16 +246,15 @@ var statify = (function(root) {
     //-------------------------------------
 
 
-    _core.EXIT = "state:exit";
-    _core.EXITED = "state:exited";
-    _core.ENTER = "state:enter";
-    _core.CHANGED = "state:changed";
+    core.EXIT = "state:exit";
+    core.EXITED = "state:exited";
+    core.ENTER = "state:enter";
+    core.CHANGED = "state:changed";
 
 
     /**
      * The ViewStateElement object wraps a DOM element (queried by the DOM selector library) that has a role in a view state.
      * The class provides methods to manage the element visibility and style when view state changes.
-     * @type {*}
      */
     (function(core) {
 
@@ -265,7 +278,7 @@ var statify = (function(root) {
             this.display = _displayPolicies[keepLayout ? 1 : 0];
             if (!keepLayout) {
                 var originalDisplay = $el.css(this.display.yes);
-                if (originalDisplay) this.display.yes = originalDisplay; //!!!!!!!!!!!!!!!
+                if (originalDisplay) this.display.yes = originalDisplay;
             }
 
             this.ensure();
@@ -278,8 +291,6 @@ var statify = (function(root) {
             },
 
             isDisplayed: function() {
-                // its' simpler to compare to the not displayed css value because in the case of display block/none
-                // the initial display value of the element could not be "block"  but "inline-block" or else
                 return this.$el.css(this.display.type) !== this.display.no;
             },
 
@@ -304,7 +315,7 @@ var statify = (function(root) {
         };
         core.ViewStateElement = ViewStateElement;
 
-    }(_core));
+    }(core));
 
 
     /**
@@ -377,7 +388,7 @@ var statify = (function(root) {
 
         core.ViewState = ViewState;
 
-    }(_core));
+    }(core));
 
 
     /**
@@ -395,12 +406,11 @@ var statify = (function(root) {
         ViewStatesManager.prototype = {
 
             initialize: function(options) {
-                this.silent = options.silent;
                 this.nextState = this.currentState = null;
             },
 
             notifyClient: function(event, stateName) {
-                if (!this.silent) this.client.trigger(event, stateName);
+                this.client.trigger(event, stateName);
             },
 
             setState: function(name) {
@@ -434,7 +444,7 @@ var statify = (function(root) {
         core.ViewStatesManager = ViewStatesManager;
 
 
-    }(_core));
+    }(core));
 
     /**
      * par of code that is executed only if the browser supports CSS3 transitions
@@ -443,6 +453,7 @@ var statify = (function(root) {
 
         var CSS = core.CSS;
         if (!CSS.transitions) return;
+
 
         /**
          * The ViewStateTransition triggers the CSS3 transitions on a view state when a style containing transitions is applied
@@ -456,16 +467,33 @@ var statify = (function(root) {
 
 
         ViewStateTransition.prototype = {
+
+            initialize: function() {
+                var _ = core._;
+                this.isPlaying = false;
+                this.callBack = null;
+                var that = this;
+                this.onComplete = function() {
+                    that.callBack();
+                    that.isPlaying = false;
+                };
+            },
+
+            playOn: function(state) {
+                this._startOn(state, false);
+            },
+
+            reverseOn: function(state) {
+                this._startOn(state, true);
+            },
+
             _startOn: function(state, reverseIt) {
                 this.isPlaying = true;
                 var duration = this._getTotalDuration(state);
                 this._start(state, duration, this.onComplete, reverseIt);
             },
 
-            _onComplete: function() {
-                this.callBack();
-                this.isPlaying = false;
-            },
+
             _start: function(state, time, callBack, reverseIt) {
                 if (reverseIt) state.exit();
                 else state.enter();
@@ -485,49 +513,33 @@ var statify = (function(root) {
                 });
                 state.transDuration = t;
                 return t;
-            },
-
-
-            initialize: function() {
-                var _ = core._;
-                this.isPlaying = false;
-                this.callBack = null;
-                this.onComplete = _.bind(this._onComplete, this);
-            },
-
-
-            playOn: function(state) {
-                this._startOn(state, false);
-            },
-
-            reverseOn: function(state) {
-                this._startOn(state, true);
             }
+
 
         };
 
-        _core.ViewStateTransition = ViewStateTransition;
+        core.ViewStateTransition = ViewStateTransition;
 
         /**
-         * some ViewStatesManager function are over-written  if browser supports transitions
-         * - listens to CSS3 transitions on state change
-         * - triggers full state lifecycle events
+         * some ViewStatesManager function must be over-written  if browser supports transitions to
+         * - listen to CSS3 transitions on state change
+         * - trigger full state lifecycle events
          */
 
-        var _ = core._;
-        var extend = function(source, destination) {
+        var _extend = function(destination, source) {
             for (var prop in source) {
                 if (source.hasOwnProperty(prop)) {
                     destination[prop] = source[prop];
                 }
             }
-        }
+        };
 
-        extend(core.ViewStatesManager.prototype, {
+        _extend(core.ViewStatesManager.prototype, {
 
             initialize: function(options) {
-                this.reverseTransitions = options.reverseTransitions;
+                this.reverseTrans = options.reverseTrans;
                 this.transition = new ViewStateTransition();
+                var _ = core._;
                 this.onCurrentExited = _.bind(this.enterNext, this);
                 this.completeCallBack = _.bind(this.afterNextEntered, this);
             },
@@ -546,7 +558,7 @@ var statify = (function(root) {
                     return;
                 }
                 this.notifyClient(core.EXIT, this.currentState.name);
-                if (this.reverseTransitions) {
+                if (this.reverseTrans) {
                     this.transition.callBack = this.onCurrentExited;
                     this.transition.reverseOn(this.currentState);
                 } else {
@@ -572,24 +584,32 @@ var statify = (function(root) {
 
         });
 
-    }(_core));
+    }(core));
 
 
     /**
-     * States builder function: search for all state targets (child elements) in a DOM element to build its view states.
+     * States builder function: build view states from statesContext object
      * @type {*}
      */
-    _core.buildViewStates = (function(core) {
+    core.buildViewStates = (function(core) {
 
 
-        var ViewState = core.ViewState;
+
+        return function(stateContext) {
+            var states = _createStatesObject(stateContext.names);
+            _populateStates(states, stateContext);
+            return states;
+        };
+
+
+
         /**
          * Create an object literal with states names as keys.
          * @param allStatesNames
          * @return {Object}
          * @private
          */
-        var _createStatesObject = function(allStatesNames) {
+        function _createStatesObject(allStatesNames) {
             allStatesNames = allStatesNames.split(",");
 
             var statesObject = {},
@@ -601,29 +621,9 @@ var statify = (function(root) {
             }
             return statesObject;
 
-        };
+        }
 
 
-        /**
-         * Add an element (state target) to a view state
-         */
-        var _registerStateElement = function(states, stateName, $el, $child, keepLayout, included) {
-            stateName = stateName.trim();
-            if (stateName === '') throw new Error("declared state on a child of " + $el.selector + " has an empty name");
-            states[stateName] = states[stateName] || new ViewState(stateName, $el, keepLayout);
-            states[stateName].addElement($child, included);
-        };
-
-
-        var _registerElementInViewStates = function(states, elStateNames, $container, $el, keepInLayout, includeIt) {
-            var _ = core._;
-            _.each(elStateNames, function(stateName) {
-                _registerStateElement(states, stateName, $container, $el, keepInLayout, includeIt);
-            });
-            _.each(_.difference(_.keys(states), elStateNames), function(stateName) {
-                _registerStateElement(states, stateName, $container, $el, keepInLayout, !includeIt);
-            });
-        };
 
         /**
          *  populate all view states from statesContext object
@@ -631,12 +631,36 @@ var statify = (function(root) {
          * @param statesContext
          * @private
          */
-        var _populateStates = function(states, statesContext) {
+        function _populateStates(states, statesContext) {
             var $el,
                 declaredStates,
                 included,
                 $statesContainer = statesContext.container,
-                _ = core._;
+                _ = core._,
+                ViewState = core.ViewState;
+
+            /**
+             * Add an element (state target) to a view state
+             */
+            var _registerStateElement = function(states, stateName, $el, $child, keepLayout, included) {
+                stateName = stateName.trim();
+                if (stateName === '') throw new Error("declared state on a child of " + $el.selector + " has an empty name");
+                states[stateName] = states[stateName] || new ViewState(stateName, $el, keepLayout);
+                states[stateName].addElement($child, included);
+            };
+
+
+            var _registerElementInViewStates = function(states, elStateNames, $container, $el, keepInLayout, includeIt) {
+                var _ = core._;
+                _.each(elStateNames, function(stateName) {
+                    _registerStateElement(states, stateName, $container, $el, keepInLayout, includeIt);
+                });
+                _.each(_.difference(_.keys(states), elStateNames), function(stateName) {
+                    _registerStateElement(states, stateName, $container, $el, keepInLayout, !includeIt);
+                });
+            };
+
+
 
             _.each(statesContext.elements, function(elementProperties) {
                 $el = elementProperties.$el;
@@ -656,47 +680,101 @@ var statify = (function(root) {
                 });
             }
 
-        };
 
+        }
 
-        return function(stateContext) {
-            var states = _createStatesObject(stateContext.names);
-            _populateStates(states, stateContext);
-            return states;
-        };
-
-
-    }(_core));
+    }(core));
 
 
     /**
      * buildStatesContext function has the responsibility to parse the DOM, or read javascript declared options
-     * to build an object containing all the informations needed to create view states for further process
+     * to build an object containing all the information needed to create view states for the DOM container
      */
-    _core.buildStatesContext = (function(core) {
-        var _config = core.config,
+    core.buildStatesContext = (function(core) {
+        var _attr = core.config.attr,
+            _optionsAttr = core.config.optionsAttr,
             _defaults = {
                 includeRoot: false,
                 keepLayout: true,
                 deepFetch: false,
-                reverseTransitions: false,
-                silent: false
+                reverseTrans: false
             };
-        /**
-         * return all children elements matching the selector value passed as parameter using a jQuery compatible selector.
-         * If deepFetch is false it returns only direct children, otherwise returns all matching elements.
-         */
-        var _findElements = function($el, selector, deepFetch) {
-            if (deepFetch) return $el.find("[" + selector + "]");
-            return $el.children("[" + selector + "]");
+
+        var string2Boolean = {
+            "false": false,
+            "true": true
+        };
+
+
+        return function($el, options) {
+            if (!$el || $el.size === 0) throw new Error("cannot build states on an unknown element");
+            var fetchElements,
+                _ = core._,
+                statesContext = {};
+            options = options || {};
+
+            // the state names must be declared in DOM or options . Options declaration prevails
+            statesContext.names = options.names || $el.attr(_attr.states);
+            if (statesContext.names === void 0) throw new Error($el.selector + " has no state declared");
+
+            statesContext.container = $el;
+
+            //default properties initialization
+            _.extend(statesContext, _defaults);
+
+            // assign options from options object by default
+            _.extend(statesContext, options);
+
+            //sets the initial state for the container: by default the first in the list
+            statesContext.initialState = options.initialState ? options.initialState : statesContext.names.split(",")[0];
+
+            //apply default option value if not declared
+            _.each(_.keys(_optionsAttr), function(key) {
+                var attrValue = $el.attr(_optionsAttr[key]);
+                if (attrValue !== void 0) {
+                    attrValue = attrValue === "" ? true : string2Boolean[attrValue.toLowerCase()];
+                    statesContext[key] = attrValue;
+                }
+            });
+
+
+            fetchElements = _.isArray(options.elements) ? _fromOptions : _fromDOM;
+            statesContext.elements = fetchElements($el, options);
+
+            statesContext.container = statesContext.container || $el;
+            return statesContext;
         };
 
 
         /**
-         * build a statesContext object from DOM states attributes declarations
+         * build the statesContext element list from options hash: here the only task is to transform string selector into jQuery object or equivallent
          */
-        var _fromDOM = function($statesContainer, options) {
-            var elements = [],
+        function _fromOptions($container, options) {
+            var elementsList = [],
+                _ = core._,
+                $ = core.$,
+                $el;
+
+            _.each(options.elements, function(elDescriptor) {
+                if (!_.isObject(elDescriptor.$el)) {
+                    $el = $(elDescriptor.el, $container);
+                    elDescriptor.$el = $el;
+                    if ("el" in elDescriptor) delete elDescriptor.el;
+                }
+                elementsList.push(elDescriptor);
+            });
+            return elementsList;
+        }
+
+
+
+
+
+        /**
+         * build a statesContext element list from DOM states attributes declarations : data-states-*
+         */
+        function _fromDOM($statesContainer, options) {
+            var elementsList = [],
                 key,
                 $elements,
                 elDef,
@@ -705,95 +783,57 @@ var statify = (function(root) {
                 _ = core._,
                 $ = core.$;
 
-            _.each([_config.outAttr, _config.inAttr], function(attribute) {
+            _.each([_attr.exc, _attr.inc], function(attribute) {
 
                 $elements = _findElements($statesContainer, attribute, deepFetch);
-                key = attribute.replace(_config.stateAttr + "-", "");
+                key = attribute.replace(_attr.states + "-", "");
 
                 _.each($elements, function(child) {
                     $child = $(child);
-                    elDef = _.find(elements, function(item) {
+                    elDef = _.find(elementsList, function(item) {
                         return item.$el === $child;
                     }) || {
                         $el: $child
                     };
                     elDef[key] = $child.attr(attribute).trim();
-                    elements.push(elDef);
+                    elementsList.push(elDef);
                 });
             });
-            return elements;
-        };
+            return elementsList;
+        }
+
+
+
 
         /**
-         * build a statesContext object from options hash
+         * return all children elements matching the selector value passed as parameter using a jQuery compatible selector.
+         * If deepFetch is false it returns only direct children, otherwise returns all matching elements if the selector has this feature
          */
-        var _fromOptions = function($container, options) {
-            var descriptors = [],
-                descriptor,
-                $children,
-                $el,
-                els = options.elements,
-                _ = core._,
-                $ = core.$;
+        function _findElements($el, selector, deepFetch) {
+            if (deepFetch) return $el.find("[" + selector + "]");
+            return $el.children("[" + selector + "]");
+        }
 
 
-            _.each(_.keys(els), function(selector) {
-                $children = $container.find(selector);
-                _.each($children, function(el) {
-                    $el = $(el);
-                    descriptor = {
-                        $el: $el
-                    };
-                    _.each(["inc", "exc"], function(value) {
-                        if (els[selector][value] !== void 0) descriptor[value] = els[selector][value];
-                    });
 
-                    if (els[selector].exc !== void 0) descriptor.exc = els[selector].exc;
-                    descriptors.push(descriptor);
-                });
-
-            });
-            return descriptors;
-        };
-
-
-        return function($el, options) {
-            if (!$el || $el.size === 0) throw new Error("cannot build states on an unknown element");
-            var findElements,
-                _ = core._,
-                ctx = {};
-
-            // the state names must be declared in DOM or options . Options declaration prevails
-            ctx.names = options.names || $el.attr(_config.stateAttr);
-            if (ctx.names === void 0) throw new Error($el.selector + " has no state declared");
-
-            ctx.container = $el;
-            //default properties initialization
-            _.extend(ctx, _defaults);
-            _.extend(ctx, options);
-
-            ctx.initialState = options.initialState ? options.initialState : ctx.names.split(",")[0];
-
-            //findElements = _.isObject(options.elements) ? _fromOptions : _fromDOM;
-            ctx.elements = _.isObject(options.elements) ? options.elements : _fromDOM($el, options);
-            ctx.container = ctx.container || $el;
-            return ctx;
-        };
-    })(_core);
+    })(core);
 
 
     /**
-     * The StateClient defines methods to enhance the client view with view states
+     * The StateClientMixin defines methods to enhance the client with view states management features
      * - it delegates the management of the states lifecycle to its stateManager member
      * - it handles state life-cycle events with the 'onStateEvent' function
      */
-    _core.StatesClient = (function(core) {
+    core.StatesClientMixin = (function(core) {
+
+
 
         var _buildStateContext = core.buildStatesContext,
             _buildStates = core.buildViewStates,
             ViewStatesManager = core.ViewStatesManager,
             _config = core.config,
             _events = [core.EXIT, core.EXITED, core.ENTER, core.CHANGED];
+
 
 
         var initializeStates = function() {
@@ -805,6 +845,9 @@ var statify = (function(root) {
             this.setState(this.statesContext.initialState);
         };
 
+        /**
+         * sets defaults values if found in options
+         */
         var applyDefaults = function() {
             var _ = core._;
             this.options = this.options || {};
@@ -828,29 +871,33 @@ var statify = (function(root) {
         };
 
         var trigger = function(event, stateName) {
-            var _ = core._;
-            if (!_.isFunction(this.$el[_config.triggerFunction])) {
+            core._debug(this.$el + " " + (event.type || event) + " " + stateName);
+            var _ = core._,
+                fn = this.$el[_config.triggerFn];
+            if (!_.isFunction(fn)) {
                 this.onStateEvent(event, stateName);
                 return;
             }
-            this.$el[_config.triggerFunction].call(this.$el, event, stateName);
+            this.fn.call(this.$el, event, stateName);
         };
 
         /**
-         * this function defined as the state life cycle events handler is intended to be overridden
-         * @param event: the event name for instance state:enter
-         * @param stateName: the state that is targeted by this event
+         * this function defined as the state life cycle events handler and is intended to be overridden
+         * @param event
+         * @param stateName
          */
         var onStateEvent = function(event, stateName) {
-            _core._debug(this.$el + " " + (event.type || event) + " " + stateName);
+            core._debug(this.$el + " " + (event.type || event) + " " + stateName);
         };
 
+        /**
+         * releases the clients
+         */
         var disposeStates = function() {
             this.currentState = null;
             this.$el.off(_events.join(" "));
             delete this.stateManager;
         };
-
 
         return {
             initializeStates: initializeStates,
@@ -863,15 +910,15 @@ var statify = (function(root) {
 
         };
 
-    })(_core);
+
+    })(core);
 
 
-    return _core;
+    return core;
 
 
 }(this));
 
-/* global Backbone,_,statify */
 (function(root, Backbone, statify) {
 
     'use strict';
@@ -893,13 +940,19 @@ var statify = (function(root) {
 
             render: function() {
                 var rendered = View.prototype.render.call(this);
-                this.initializeStates();
+                this.postRender();
                 return rendered;
+            },
+
+            postRender: function() {
+                if (this.statesInitialized) return;
+                this.initializeStates();
+                this.statesInitialized = true;
             }
         });
 
         // enhance Bakbone view with the StatesClient behaviour
-        _.extend(StatesClientView.prototype, statify.StatesClient);
+        _.extend(StatesClientView.prototype, statify.StatesClientMixin);
 
         return StatesClientView;
 
@@ -907,4 +960,4 @@ var statify = (function(root) {
     // define and add the StatifiedView to the root of the Backbone object
     Backbone.StatifiedView = Backbone.View.statify(Backbone.View);
 
-})(this, Backbone, statify);
+}(this, Backbone, statify));

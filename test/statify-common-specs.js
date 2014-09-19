@@ -11,10 +11,22 @@
 
 
 	var createMockHtmlNode = function () {
-		var node = "<div id='container-test' class='container' data-states='one,two,three'>" +
-			"<div id='item1' class='item1' data-states-inc='one,two,three'></div>" +
-			"<div id='item2' class='item2' data-states-inc='one,two'></div>" +
-			"<div id='item3' class='item3' data-states-exc='one'><div id='item31' class='square3' data-states-inc='one'></div></div>" +
+		var node = "<div id='container-test' class='container' data-states='one,two,three'" +
+			"data-states-keepLayout " +
+			"data-states-reverseTrans='false' " +
+			"data-states-includeRoot='false'>" +
+			"	<div id='item1' class='item1' data-states-inc='one,two,three'></div>" +
+			"	<div id='item2' class='item2' data-states-inc='one,two'></div>" +
+			"	<div id='item3' class='item3' data-states-exc='one'><div id='item31' class='square3' data-states-inc='one'></div></div>" +
+			"</div>";
+		return node;
+	};
+
+	var createMockHtmlNodeNoAttr = function () {
+		var node = "<div id='container-test' class='container' data-states='one,two,three'" +
+			"	<div id='item1' class='item1' data-states-inc='one,two,three'></div>" +
+			"	<div id='item2' class='item2' data-states-inc='one,two'></div>" +
+			"	<div id='item3' class='item3' data-states-exc='one'><div id='item31' class='square3' data-states-inc='one'></div></div>" +
 			"</div>";
 		return node;
 	};
@@ -24,29 +36,26 @@
 		var CSS = statify.CSS;
 
 		it("should find the css rules present in the stylesheet", function () {
-			var selector = ".item1-one",
+			var selector = ".item1--one",
 				expectedStyle;
 			expectedStyle = CSS.findStyle(selector);
 			expect(expectedStyle).not.toEqual("undefined");
 
-			selector = ".item1--one";
-			expectedStyle = CSS.findStyle(selector);
-			expect(expectedStyle).not.toEqual("undefined");
 
-			selector = ".item2-two";
+			selector = ".item2--two";
 			expectedStyle = CSS.findStyle(selector);
 			expect(expectedStyle).not.toEqual("undefined");
 		});
 
 		it("CSS.findStyle should return a CSSStyleDeclaration object type", function () {
-			var selector = ".item1-one",
+			var selector = ".item1--one",
 				expectedStyle;
 			expectedStyle = CSS.findStyle(selector);
 			expect(expectedStyle instanceof CSSStyleDeclaration).toBeTruthy();
 		});
 
 		it("should return the string 'undefined' if the css class is not found", function () {
-			var style = ".item99-one",
+			var style = ".item99--one",
 				found;
 			found = CSS.findStyle(style);
 			expect(found).toEqual("empty");
@@ -55,6 +64,114 @@
 
 
 	});
+
+
+	describe("StatesContext object building tests from DOM", function () {
+
+		var buildStatesContext = statify.buildStatesContext;
+
+		var $el = $(createMockHtmlNode()),
+			statesContext = buildStatesContext($el);
+
+		/*statesContext = buildStatesContext($el, {
+			keepLayout: true,
+			deepFetch: false,
+			includeRoot: false,
+			initialState: "two",
+			reverseTrans: false,
+			silent: false
+		});*/
+
+
+		it("should build states names correctly", function () {
+			expect(statesContext).not.toBe(null);
+			expect(statesContext.names).toEqual("one,two,three");
+		});
+
+
+		it("each context property should be initialized with the value declared in attributes", function () {
+			expect(statesContext.keepLayout).toBeTruthy();
+			expect(statesContext.reverseTrans).toBeFalsy();
+			expect(statesContext.includeRoot).toBeFalsy();
+		});
+
+		it("the statesContext container property should be $el ", function () {
+			expect(statesContext.container).toEqual($el);
+		});
+
+		it("should find 3 elements in stateContext", function () {
+			expect(statesContext.elements.length).toEqual(3);
+		});
+
+		it("should find 4 elements in stateContext if deepFetch if set to true", function () {
+			statesContext = buildStatesContext($el, {
+				deepFetch: true
+			});
+			expect(statesContext.elements.length).toEqual(4);
+		});
+
+		it("each context options property should be initialized with the right default value when not declared in options", function () {
+			statesContext = buildStatesContext($el, {});
+			expect(statesContext.keepLayout).toBeTruthy();
+			expect(statesContext.deepFetch).toBeFalsy();
+			expect(statesContext.reverseTrans).toBeFalsy();
+			expect(statesContext.initialState).toEqual("one");
+		});
+
+	});
+
+
+
+
+
+	describe("StatesContext object builder tests from options", function () {
+
+		var buildStatesContext = statify.buildStatesContext;
+
+		var $el = $(createMockHtmlNode()),
+			statesContext = buildStatesContext($el, {
+				names: "one,two,three",
+				elements: [
+					{
+						el: ".item1",
+						inc: "one,two,three"
+					},
+					{
+						el: ".item2",
+						inc: "one,two"
+					},
+					{
+						el: ".item3",
+						exc: "one"
+					}
+                ]
+			});
+
+		it("should find states names", function () {
+			expect(statesContext).not.toBe(null);
+			expect(statesContext.names).toEqual("one,two,three");
+		});
+
+		it("the statesContext container property should be $el object ", function () {
+			expect(statesContext.container).toEqual($el);
+		});
+
+
+		it("keepLayout should be true by default", function () {
+			expect(statesContext.keepLayout).toBeTruthy();
+		});
+
+
+		it("should find 3 targets in stateContext", function () {
+			expect(statesContext.elements.length).toEqual(3);
+		});
+
+		it(".tem1 should be included in all states", function () {
+			expect(statesContext.elements.length).toEqual(3);
+		});
+
+	});
+
 
 
 	describe("ViewStateElement visibility tests", function () {
@@ -82,7 +199,7 @@
 
 		it("should have the right style when state style applied with default css modifier", function () {
 			stateElement.addStateStyle("one");
-			expect(stateElement.$el.hasClass("item1-one")).toBeTruthy();
+			expect(stateElement.$el.hasClass("item1--one")).toBeTruthy();
 			stateElement.removeStateStyle("one");
 		});
 
@@ -92,10 +209,10 @@
 		});
 
 		it("should have the right style when css  name modifier was changed in config", function () {
-			statify.config.cssModifier = "--";
+			statify.config.cssModifier = "-is-";
 			stateElement = new statify.ViewStateElement($el, true);
 			stateElement.addStateStyle("one");
-			expect(stateElement.$el.hasClass("item1--one")).toBeTruthy();
+			expect(stateElement.$el.hasClass("item1-is-one")).toBeTruthy();
 			stateElement.removeStateStyle("one");
 
 			statify.config.cssModifier = "-";
@@ -105,69 +222,9 @@
 	});
 
 
-	describe("StatesContext object building tests from DOM", function () {
-
-		var buildStatesContext = statify.buildStatesContext;
-
-		var $el = $(createMockHtmlNode()),
-			statesContext;
 
 
-		statesContext = buildStatesContext($el, {
-			keepLayout: true,
-			deepFetch: false,
-			includeRoot: false,
-			initialState: "two",
-			reverseTransitions: false,
-			silent: false
-		});
-
-
-		it("should build states names correctly", function () {
-			expect(statesContext).not.toBe(null);
-			expect(statesContext.names).toEqual("one,two,three");
-		});
-
-
-		it("each context property should be initialized with the value declared in options", function () {
-			expect(statesContext.keepLayout).toBeTruthy();
-			expect(statesContext.deepFetch).toBeFalsy();
-			expect(statesContext.reverseTransitions).toBeFalsy();
-			expect(statesContext.silent).toBeFalsy();
-			expect(statesContext.initialState).toEqual("two");
-		});
-
-		it("the statesContext container property should be $el ", function () {
-			expect(statesContext.container).toEqual($el);
-		});
-
-		it("should find 3 elements in stateContext", function () {
-			expect(statesContext.elements.length).toEqual(3);
-		});
-
-		it("should find 4 elements in stateContext if deepFetch if set to true", function () {
-			statesContext = buildStatesContext($el, {
-				deepFetch: true
-			});
-			expect(statesContext.elements.length).toEqual(4);
-		});
-
-		it("each context options property should be initialized with the right default value when not declared in options", function () {
-			statesContext = buildStatesContext($el, {});
-			expect(statesContext.keepLayout).toBeTruthy();
-			expect(statesContext.deepFetch).toBeFalsy();
-			expect(statesContext.initialState).toEqual("one");
-
-			expect(statesContext.reverseTransitions).toBeFalsy();
-			expect(statesContext.silent).toBeFalsy();
-
-		});
-
-	});
-
-
-	describe("StatesContext object builder tests from options", function () {
-
+	describe("view states builder tests from options", function () {
 		var buildStatesContext = statify.buildStatesContext;
 
 		var $el = $(createMockHtmlNode()),
@@ -175,40 +232,65 @@
 				names: "one,two,three",
 				elements: [
 					{
-						$el: ".item1",
+						el: ".item1",
 						inc: "one,two,three"
 					},
 					{
-						$el: ".item2",
+						el: ".item2",
 						inc: "one,two"
 					},
 					{
-						$el: ".item3",
+						el: ".item3",
 						exc: "one"
 					}
                 ]
 			});
+			var states = statify.buildViewStates(statesContext);
+			
+			var aState, found, timesFound = 0;
 
-		it("should find states names", function () {
-			expect(statesContext).not.toBe(null);
-			expect(statesContext.names).toEqual("one,two,three");
+		it("should find the .item1 object in every ViewState ", function () {
+			var $el1 = $('.item1', $el);
+			_.each(_.keys(states), function (key) {
+				aState = states[key];
+				found = _.find(aState.inclusions, function (viewStateElement) {
+					return viewStateElement.$el[0] === $el1[0];
+				});
+				if (found) timesFound++;
+			});
+			expect(timesFound).toEqual(_.keys(states).length);
 		});
 
-		it("the statesContext container property should be $el object ", function () {
-			expect(statesContext.container).toEqual($el);
-		});
-
-
-		it("keepLayout should be true by default", function () {
-			expect(statesContext.keepLayout).toBeTruthy();
-		});
-
-
-		it("should find 3 targets in stateContext", function () {
-			expect(statesContext.elements.length).toEqual(3);
-		});
 
 	});
+
+
+	describe("view states builder tests from DOM declarations", function () {
+		var $el = $(createMockHtmlNodeNoAttr()),
+			statesContext = statify.buildStatesContext($el, {
+				includeRoot: true
+			});
+		var states = statify.buildViewStates(statesContext);
+		var aState, found, timesFound = 0;
+
+		it("should find the $el object in every ViewState when includeRoot is set to true", function () {
+			_.each(_.keys(states), function (key) {
+				aState = states[key];
+				found = _.find(aState.inclusions, function (viewStateElement) {
+					return viewStateElement.$el[0] === $el[0];
+				});
+				if (found) timesFound++;
+			});
+			expect(timesFound).toEqual(_.keys(states).length);
+		});
+
+
+	});
+
+
+
+
+
 
 
 	describe("ViewStates behaviours tests", function () {
@@ -239,27 +321,7 @@
 
 	});
 
-	describe("view states builder tests", function () {
-		var $el = $(createMockHtmlNode()),
-			statesContext = statify.buildStatesContext($el, {
-				includeRoot: true
-			});
-		var states = statify.buildViewStates(statesContext);
-		var aState, found, timesFound = 0;
 
-		it("should find the $el object in every ViewState when includeRoot is set to true", function () {
-			_.each(_.keys(states), function (key) {
-				aState = states[key];
-				found = _.find(aState.inclusions, function (viewState) {
-					return viewState.$el === $el;
-				});
-				if (found) timesFound++;
-			});
-			expect(timesFound).toEqual(_.keys(states).length);
-		});
-
-
-	});
 
 
 }(this));
@@ -278,12 +340,12 @@
 
 	describe("CSS transitions duration computing", function () {
 		it("CSS.getTransDuration should return the proper total value of transition duration", function () {
-			var style = ".item1-one",
+			var style = ".item1--one",
 				duration;
 			duration = CSS.getFullDuration(style);
 			expect(duration).toBe(1000);
 
-			style = ".item2-two";
+			style = ".item2--two";
 			duration = CSS.getFullDuration(style);
 			expect(duration).toBe(1500);
 

@@ -6,7 +6,7 @@
     float:left;
 }
 
-.item1-one , .item1--one {
+.item1--one , .item1-is-one {
     opacity: 0.0;
     transition: all 1.0s;
     -moz-transition: all 1.0s;
@@ -14,7 +14,7 @@
     -o-transition: all 1.0s;;
 }
 
-.item1-two {
+.item1--two {
     opacity: 1.0;
     transition: all 1.0s;
     -moz-transition: all 1.0s;
@@ -24,7 +24,7 @@
 
 
 
-.item1-three {
+.item1--three {
     opacity: 1.0;
     transition: all 2.0s;
 	transition-delay: 2s;
@@ -38,11 +38,11 @@
     
 }
 
-.item2-one {
+.item2--one {
     color: red;
 }
 
-.item2-two {
+.item2--two {
     color: red;
     opacity: 1.0;
     transition: all 1.0s;
@@ -55,7 +55,7 @@
 	-o-transition-delay:500ms;
 }
 
-.item3-three {
+.item3--three {
     color: red;
     opacity: 1.0;
     transition: all 1.0s;
@@ -64,7 +64,7 @@
     -o-transition: all 1.0s;
 }
 
-.test1, .test2, .test3, .test1-one, .test2-two, .test3-three {
+.test1, .test2, .test3, .test1--one, .test2--two, .test3--three {
 
 }
 

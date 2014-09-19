@@ -1,483 +1,291 @@
 /* global describe,expect,it,spyOn,runs,waitsFor,setTimeout,$ */
 (function (root) {
 
-    "use strict";
+	"use strict";
 
-    var statify = root.statify,
-        _ = root._ || statify._,
-        $ = root.$ || statify.$,
-        angular=root.angular,
-        CSSStyleDeclaration = root.CSSStyleDeclaration;
+	var statify = root.statify,
+		_ = root._ || statify._,
+		$ = root.$ || statify.$,
+		angular = root.angular,
+		controllerScope, directiveScope, rootScope, ngElement;
 
-    if (angular) angular.module('statify-ng',[]);
 
 
-    var createMockHtmlNode = function () {
-        var node = "<div id='container-test' class='container' data-states='one,two,three'>" +
-            "<div id='item1' class='item1' data-states-inc='one,two,three'></div>" +
-            "<div id='item2' class='item2' data-states-inc='one,two'></div>" +
-            "<div id='item3' class='item3' data-states-exc='one'><div id='item31' class='square3' data-states-inc='one'></div></div>" +
-            "</div>";
-        return node;
-    };
 
 
-    describe("CSS style sheet introspection tests", function () {
-        var CSS = statify.CSS;
 
-        it("should find the css rules present in the stylesheet", function () {
-            var selector = ".item1-one",
-                expectedStyle;
-            expectedStyle = CSS.findStyle(selector);
-            expect(expectedStyle).not.toEqual("undefined");
+	var node = "<div id='container-test' ng-controller='TestController' class='container' data-states='one,two,three' >" +
+		"<div id='item1' class='item1' data-states-inc='one,two,three'></div>" +
+		"<div id='item2' class='item2' data-states-inc='one,two'><button id='selector'  ng-click='setState(\"two\")'></button></div>" +
+		"<div id='item3' class='item3' data-states-exc='one'></div>" +
+		"</div>";
 
-            selector = ".item1--one";
-            expectedStyle = CSS.findStyle(selector);
-            expect(expectedStyle).not.toEqual("undefined");
 
-            selector = ".item2-two";
-            expectedStyle = CSS.findStyle(selector);
-            expect(expectedStyle).not.toEqual("undefined");
-        });
 
-        it("CSS.findStyle should return a CSSStyleDeclaration object type", function () {
-            var selector = ".item1-one",
-                expectedStyle;
-            expectedStyle = CSS.findStyle(selector);
-            expect(expectedStyle instanceof CSSStyleDeclaration).toBeTruthy();
-        });
 
-        it("should return the string 'undefined' if the css class is not found", function () {
-            var style = ".item99-one",
-                found;
-            found = CSS.findStyle(style);
-            expect(found).toEqual("empty");
+	//---------------------------------------
+	//	TESTS
+	//----------------------------------------
+	describe("TestController", function () {
 
-        });
+		beforeEach(function () {
+			boostrapModule();
+		});
 
+		it("should have a setState method", function () {
+			expect(angular.isFunction(controllerScope.setState)).toBeTruthy();
+		});
 
-    });
+		afterEach(function () {
+			releaseModule();
+		})
 
+	});
 
-    describe("ViewStateElement visibility tests", function () {
+	describe("The data-states-exc directive", function () {
 
-        var $el = $(createMockHtmlNode()).find("#item1");
-        var stateElement = new statify.ViewStateElement($el, false);
+		beforeEach(function () {
+			boostrapModule();
+		});
 
-        it("after toggle called first time, visible element should be considered as not displayed", function () {
-            stateElement.toggle();
-            expect(stateElement.$el.css(stateElement.display.type)).toBe(stateElement.display.no);
-        });
+		it("scope should have on option object", function () {
+			expect(angular.isObject(directiveScope.options)).toBeTruthy();
+		});
 
-        it("after toggle called another time,view state element should be considered as displayed", function () {
-            stateElement.toggle();
-            expect(stateElement.$el.css(stateElement.display.type)).toBe(stateElement.display.yes);
-        });
+		it("scope should have a stateManager object", function () {
+			expect(angular.isObject(directiveScope.stateManager)).toBeTruthy();
+		});
 
-    });
 
+		it("scope should have a initializeState function", function () {
+			expect(angular.isFunction(directiveScope.initializeStates)).toBeTruthy();
+		});
 
-    describe("ViewStateElement style swapping", function () {
+		it("scope should have a onStateEvent function", function () {
+			expect(angular.isFunction(directiveScope.onStateEvent)).toBeTruthy();
+		});
 
-        var $el = $(createMockHtmlNode()).find("#item1");
-        var stateElement = new statify.ViewStateElement($el, true);
+		it("scope should have a dispose states function", function () {
+			expect(angular.isFunction(directiveScope.disposeStates)).toBeTruthy();
+		});
 
-        it("should have the right style when state style applied with default css modifier", function () {
-            stateElement.addStateStyle("one");
-            expect(stateElement.$el.hasClass("item1-one")).toBeTruthy();
-            stateElement.removeStateStyle("one");
-        });
 
-        it("should not apply style that doesn't exist in any style sheet", function () {
-            stateElement.addStateStyle("no-exist");
-            expect(stateElement.$el.hasClass("no-exist")).toBeFalsy();
-        });
 
-        it("should have the right style when css  name modifier was changed in config", function () {
-            statify.config.cssModifier = "--";
-            stateElement = new statify.ViewStateElement($el, true);
-            stateElement.addStateStyle("one");
-            expect(stateElement.$el.hasClass("item1--one")).toBeTruthy();
-            stateElement.removeStateStyle("one");
 
-            statify.config.cssModifier = "-";
-        });
+		afterEach(function () {
+			releaseModule();
+		})
 
+	});
 
-    });
 
 
-    describe("StatesContext object building tests from DOM", function () {
+	describe("The stateClient options", function () {
 
-        var buildStatesContext = statify.buildStatesContext;
+		beforeEach(function () {
+			boostrapModule();
 
-        var $el = $(createMockHtmlNode()),
-            statesContext;
+		});
 
+		it("should declare 3 elements", function () {
+			expect(directiveScope.options.elements.length).toEqual(3);
+		});
 
-        statesContext = buildStatesContext($el, {
-            keepLayout: true,
-            deepFetch: false,
-            includeRoot: false,
-            initialState: "two",
-            reverseTransitions: false,
-            silent: false
-        });
 
+		afterEach(function () {
+			releaseModule();
+		})
 
-        it("should build states names correctly", function () {
-            expect(statesContext).not.toBe(null);
-            expect(statesContext.names).toEqual("one,two,three");
-        });
+	});
 
 
-        it("each context property should be initialized with the value declared in options", function () {
-            expect(statesContext.keepLayout).toBeTruthy();
-            expect(statesContext.deepFetch).toBeFalsy();
-            expect(statesContext.reverseTransitions).toBeFalsy();
-            expect(statesContext.silent).toBeFalsy();
-            expect(statesContext.initialState).toEqual("two");
-        });
 
-        it("the statesContext container property should be $el ", function () {
-            expect(statesContext.container).toEqual($el);
-        });
+	describe("The stateManager", function () {
 
-        it("should find 3 elements in stateContext", function () {
-            expect(statesContext.elements.length).toEqual(3);
-        });
+		beforeEach(function () {
+			boostrapModule();
 
-        it("should find 4 elements in stateContext if deepFetch if set to true", function () {
-            statesContext = buildStatesContext($el, {
-                deepFetch: true
-            });
-            expect(statesContext.elements.length).toEqual(4);
-        });
+		});
 
-        it("each context options property should be initialized with the right default value when not declared in options", function () {
-            statesContext = buildStatesContext($el, {});
-            expect(statesContext.keepLayout).toBeTruthy();
-            expect(statesContext.deepFetch).toBeFalsy();
-            expect(statesContext.initialState).toEqual("one");
+		it("should hold states one,two,three", function () {
+			expect(statify._.keys(directiveScope.stateManager.states).length).toEqual(3);
+			expect(statify._.keys(directiveScope.stateManager.states)).toEqual(['one', 'two', 'three']);
+		});
 
-            expect(statesContext.reverseTransitions).toBeFalsy();
-            expect(statesContext.silent).toBeFalsy();
 
-        });
+		afterEach(function () {
+			releaseModule();
+		})
 
-    });
+	});
 
 
-    describe("StatesContext object builder tests from options", function () {
 
-        var buildStatesContext = statify.buildStatesContext;
 
-        var $el = $(createMockHtmlNode()),
-            statesContext = buildStatesContext($el, {
-                names: "one,two,three",
-                elements: [
-                    {$el: ".item1", inc: "one,two,three"},
-                    {$el: ".item2", inc: "one,two"},
-                    {$el: ".item3", exc: "one"}
-                ]
-            });
+	describe("The directiveScope", function () {
 
-        it("should find states names", function () {
-            expect(statesContext).not.toBe(null);
-            expect(statesContext.names).toEqual("one,two,three");
-        });
+		beforeEach(function (done) {
+			boostrapModule();
+			spyOn(directiveScope, '$emit');
+			setTimeout(function () {
+				done();
+			}, 1000);
+		});
 
-        it("the statesContext container property should be $el object ", function () {
-            expect(statesContext.container).toEqual($el);
-        });
+		it("scope should have emitted an state:cghaned event", function (done) {
+			expect(directiveScope.$emit).toHaveBeenCalledWith('state:changed', 'one');
+			done();
+		});
 
 
-        it("keepLayout should be true by default", function () {
-            expect(statesContext.keepLayout).toBeTruthy();
-        });
+		afterEach(function () {
+			releaseModule();
+		})
 
+	});
 
-        it("should find 3 targets in stateContext", function () {
-            expect(statesContext.elements.length).toEqual(3);
-        });
+	describe("invoking setState on the controller scope", function () {
 
-    });
+		beforeEach(function (done) {
+			boostrapModule();
+			spyOn(directiveScope, '$emit');
+			setTimeout(function () {
+				controllerScope.setState("two");
+				setTimeout(function () {
+					done();
+				}, 2000);
+			}, 2000);
+		});
 
+		it("should trigger states lifecycle events on directive scope", function (done) {
+			expect(directiveScope.$emit).toHaveBeenCalledWith('state:exit', 'one');
+			expect(directiveScope.$emit).toHaveBeenCalledWith('state:exited', 'one');
+			expect(directiveScope.$emit).toHaveBeenCalledWith('state:enter', 'two');
+			expect(directiveScope.$emit).toHaveBeenCalledWith('state:changed', 'two');
+			done();
+		});
 
-    describe("ViewStates behaviours tests", function () {
 
-        var $el = $(createMockHtmlNode()),
-            statesContext = statify.buildStatesContext($el, {});
-        var states = statify.buildViewStates(statesContext);
+		afterEach(function () {
+			releaseModule();
+		})
 
-        var stateOne = states.one;
-        stateOne.enter();
+	});
 
-        it("excluded elements should not visible after entered state", function () {
-            var element;
-            for (var i = 0, len = stateOne.exclusions; i < len; i++) {
-                element = stateOne.exclusions[i];
-                expect(element.isDisplayed()).toBe(false);
-            }
 
-        });
+	//---------------------------------------
+	//	UITILITY FUNCTIONS TESTS
+	//----------------------------------------
 
-        it("included elements should be visible after entered state", function () {
-            for (var i = 0, el, len = stateOne.inclusions.length; i < len; i++) {
-                el = stateOne.inclusions[i];
-                expect(el.isDisplayed()).toBe(true);
-            }
-        });
+	var arr1, arr2;
 
+	describe("_.find function ", function () {
+		beforeEach(function () {
+			arr1 = ["a", "b", "c", "d", "c"];
+		});
 
-    });
+		it("should find proper value ", function () {
+			var iterator = function (item) {
+				return item === "c";
+			};
 
-    describe("view states builder tests", function () {
-        var $el = $(createMockHtmlNode()),
-            statesContext = statify.buildStatesContext($el, {
-                includeRoot: true
-            });
-        var states = statify.buildViewStates(statesContext);
-        var aState, found, timesFound = 0;
+			expect(_.find(arr1, iterator)).toEqual("c");
 
-        it("should find the $el object in every ViewState when includeRoot is set to true", function () {
-            _.each(_.keys(states), function (key) {
-                aState = states[key];
-                found = _.find(aState.inclusions, function (viewState) {
-                    return viewState.$el === $el;
-                });
-                if (found) timesFound++;
-            });
-            expect(timesFound).toEqual(_.keys(states).length);
-        });
+		});
 
+		it("should return undefined if not find value ", function () {
+			var iterator = function (item) {
+				return item === "e";
+			};
 
-    });
+			expect(_.find(arr1, iterator)).toEqual(void 0);
+		});
 
+	});
 
-}(this));
 
+	describe("_.keys function ", function () {
+		var o1;
+		beforeEach(function () {
+			o1 = {
+				"one": 1,
+				"two": 2,
+				"three": 3
+			};
+		});
 
-/* global describe,expect,it,spyOn,runs,waitsFor,setTimeout */
-(function (root) {
+		it("should object keys ", function () {
+			expect(_.keys(o1)).toEqual(["one", "two", "three"]);
 
-    "use strict";
+		});
+		
+		it("should return empty array ", function () {
+			expect(_.keys({})).toEqual([]);
 
-    var statify = root.statify,
-        _ = root._ || statify._,
-        $ = root.$,
-        CSS = statify.CSS;
+		});
 
+	});
 
-    describe("CSS transitions duration computing", function () {
-        it("CSS.getTransDuration should return the proper total value of transition duration", function () {
-            var style = ".item1-one",
-                duration;
-            duration = CSS.getFullDuration(style);
-            expect(duration).toBe(1000);
+	describe("_.difference function ", function () {
+		beforeEach(function () {
+			arr1 = ["one", "two", "three", "four", "one"];
 
-            style = ".item2-two";
-            duration = CSS.getFullDuration(style);
-            expect(duration).toBe(1500);
+		});
 
-            style = ".two-properties-transitions";
-            duration = CSS.getFullDuration(style);
-            expect(duration).toBe(3000);
-        });
-    });
+		it("should return the right mono value array", function () {
+			arr2 = ["one"];
+			expect(_.difference(arr1, arr2)).toEqual(["two", "three", "four"]);
+		});
 
+		it("should return the right multi value array", function () {
+			arr2 = ["one", "two"];
+			expect(_.difference(arr1, arr2)).toEqual(["three", "four"]);
+		});
 
-    describe("ViewStateTransitions test:", function () {
-        var node = "<div id='container-test' class='container' data-states='one,two,three'>" +
-            "<div id='item1' class='item1' data-states-inc='all'></div></div>";
+		it("should return original array if arrays are completly different", function () {
+			arr2 = ["0", "1"];
+			expect(_.difference(arr1, arr2)).toEqual(["one", "two", "three", "four", "one"]);
+		});
 
-        var $el = $(node),
-            statesContext = statify.buildStatesContext($el, {}),
-            states = statify.buildViewStates(statesContext),
-            state = states.one;
+	});
 
-        it("callback should be called at the end of transition", function () {
 
-            var mockCallBack = function () {
-            };
+	describe("_.indexOf function ", function () {
+		beforeEach(function () {
+			arr1 = ["one", "two", "three", "four", "one"];
+		});
 
-            var transition = new statify.ViewStateTransition();
-            transition.callBack = mockCallBack;
+		it("should find proper index", function () {
+			expect(_.indexOf(arr1, "two")).toEqual(1);
 
-            spyOn(transition, 'callBack');
+		});
 
-            var flag;
+		it("should return -1", function () {
+			expect(_.indexOf(arr1, "a")).toEqual(-1);
 
-            runs(function () {
-                transition.playOn(state);
-                setTimeout(function () {
-                    flag = true;
-                }, 1000);
-            });
+		});
 
-            waitsFor(function () {
-                return flag;
-            }, "The Value should be incremented", 1100);
+	});
 
-            runs(function () {
-                expect(transition.callBack).toHaveBeenCalled();
-            });
 
 
-        });
+	function boostrapModule() {
 
+		angular.module('statify-ng-test', ['statify-ng'])
+			.controller("TestController", ['$scope', '$rootScope',
+				function ($scope, $rootScope) {
+					controllerScope = $scope;
+					rootScope = $rootScope;
+			}]);
 
-    });
+		ngElement = angular.element(node);
+		angular.bootstrap(ngElement, ['statify-ng-test']);
+		directiveScope = ngElement.isolateScope();
+	};
 
-    describe("ViewStatesManager tests on a state container ", function () {
 
-        var mockStatesContainer = "<div id='container-test' data-states='one,two,three'>" +
-            "<div id='item1' class='test1' data-states-inc='one'></div>" +
-            "<div id='item2' class='test2' data-states-inc='two'></div>" +
-            "<div id='item3' class='test3' data-states-exc='three'></div>" +
-            "</div>";
-
-
-        var $el = $(mockStatesContainer);
-        var mockClient = {
-            $el: $el,
-            trigger: function (event, stateName) {
-                this.$el.trigger(event, stateName);
-            }
-
-        };
-
-        var statesContext = statify.buildStatesContext($el, {});
-        var states = statify.buildViewStates(statesContext);
-
-
-        var statesManager = new statify.ViewStatesManager({
-            client: mockClient,
-            states: states
-        }, {});
-
-
-        it("should throw error when setting unknown state", function () {
-            try {
-                statesManager.setState("no-exist");
-            } catch (e) {
-                expect(e.message).toEqual("unknown state:-no-exist-");
-            }
-
-        });
-
-        it("Should trigger states life cycle events if not silent", function () {
-            statesManager.silent = false;
-            statesManager.setState("one");
-            spyOn(mockClient, 'trigger');
-            statesManager.setState("two");
-
-
-            expect(mockClient.trigger).toHaveBeenCalledWith(statify.EXIT, "one");
-            expect(mockClient.trigger).toHaveBeenCalledWith(statify.EXITED, "one");
-            expect(mockClient.trigger).toHaveBeenCalledWith(statify.ENTER, "two");
-            expect(mockClient.trigger).toHaveBeenCalledWith(statify.CHANGED, "two");
-
-            statesManager.setState("three");
-
-            expect(mockClient.trigger).toHaveBeenCalledWith(statify.EXIT, "two");
-            expect(mockClient.trigger).toHaveBeenCalledWith(statify.EXITED, "two");
-            expect(mockClient.trigger).toHaveBeenCalledWith(statify.ENTER, "three");
-            expect(mockClient.trigger).toHaveBeenCalledWith(statify.CHANGED, "three");
-
-        });
-
-        it("Should not trigger states life cycle events if silent", function () {
-            statesManager.silent = true;
-            statesManager.setState("one");
-            spyOn(mockClient, 'trigger');
-
-            statesManager.setState("two");
-            expect(mockClient.trigger).not.toHaveBeenCalledWith(statify.EXIT, statify.EXIT, "one");
-            expect(mockClient.trigger).not.toHaveBeenCalledWith(statify.ENTER, statify.ENTER, "two");
-
-        });
-
-    });
-
-
-    describe("ViewStatesManager tests with simple css transitions", function () {
-
-        var node = "<div id='container-test' class='container' data-states='one,two,three'>" +
-                "<div id='item1' class='item1' data-states-inc='all'></div></div>",
-            $el = $(node),
-            mockClient = {
-                $el: $el,
-                trigger: function (event, stateName) {
-                    this.$el.trigger(event, stateName);
-                }
-            };
-
-
-        var statesContext = statify.buildStatesContext($el, {});
-        var states = statify.buildViewStates(statesContext);
-
-
-        var statesManager = new statify.ViewStatesManager({
-            client: mockClient,
-            states: states
-        }, {
-            reverseTransitions: false
-        });
-
-        statesManager.silent = false;
-
-        var timeOut;
-
-
-        it("client should have triggered ENTER and CHANGED state lifecycle events after transitions end when setting initial state", function () {
-
-            spyOn(mockClient, 'trigger');
-            runs(function () {
-                statesManager.setState("one");
-                setTimeout(function () {
-                    timeOut = true;
-                }, 1000);
-            });
-
-            waitsFor(function () {
-                return timeOut;
-            }, "The Value should be incremented", 1100);
-
-
-            runs(function () {
-                expect(mockClient.trigger).toHaveBeenCalledWith(statify.ENTER, "one");
-                expect(mockClient.trigger).toHaveBeenCalledWith(statify.CHANGED, "one");
-            });
-
-        });
-
-
-        it("client should have triggered all state lifecycle events after transitions end when changing state", function () {
-            spyOn(mockClient, 'trigger');
-
-            runs(function () {
-                timeOut = false;
-                statesManager.setState("three");
-
-                setTimeout(function () {
-                    timeOut = true;
-                }, 4000);
-            });
-
-            waitsFor(function () {
-                return timeOut;
-            }, "The Value should be incremented", 4100);
-
-            runs(function () {
-                expect(mockClient.trigger).toHaveBeenCalledWith(statify.EXIT, "one");
-                expect(mockClient.trigger).toHaveBeenCalledWith(statify.EXITED, "one");
-                expect(mockClient.trigger).toHaveBeenCalledWith(statify.ENTER, "three");
-                expect(mockClient.trigger).toHaveBeenCalledWith(statify.CHANGED, "three");
-            });
-
-        });
-    });
-
+	function releaseModule() {
+		rootScope.$destroy();
+	}
 
 }(this));

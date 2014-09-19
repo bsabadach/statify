@@ -1,6 +1,5 @@
 /*global module:false,require:false*/
 module.exports = function (grunt) {
-	//TODO augenerer les banners
 
 	"use strict";
 
@@ -9,14 +8,33 @@ module.exports = function (grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 		meta: {
-			src_core: 'core/statify-core.js',
-			src_adapt_$: 'adapters/statify-$-adapter.js',
-			src_adapt_bb: 'adapters/statify-backbone-adapter.js',
-			src_adapt_ng: 'adapters/statify-angular-adapter.js',
-			jq_lib: ['test/lib/jquery-1.7.2.min.js'],
-			bb_lib: ['test/lib/backbone-0.9.1.js'],
-			under_lib: ['test/lib/underscore-1.3.1.js'],
-			ng_lib: ['test/lib/angular.js']
+			src_core: 'src/core/statify-core.js',
+			src_core_build: 'build/statify-core.js',
+			src_adapt_$: 'src/adapters/statify-$-adapter.js',
+			src_adapt_bb: 'src/adapters/statify-backbone-adapter.js',
+			src_adapt_ng: 'src/adapters/statify-angular-adapter.js',
+			jq_lib: ['bower_components/jquery/dist/jquery.js'],
+			bb_lib: ['bower_components/backbone/backbone.js'],
+			under_lib: ['bower_components/underscore/underscore.js'],
+			ng_lib: ['bower_components/angular/angular.js'],
+			banner: '//\n' +
+				'// <%= pkg.name %> - v<%= pkg.version %>\n' +
+				'// The MIT License\n' +
+				'// Copyright (c) 2014 Boris Sabadach <boris@washmatique.fr> \n' +
+				'//\n'
+		},
+
+		"string-replace": {
+			version: {
+				options: {
+					replacements: [{
+						pattern: /{{VERSION}}/g,
+						replacement: '<%= pkg.version %>'
+					}]
+				},
+				src: '<%=meta.src_core%>',
+				dest: '<%=meta.src_core_build%>',
+			}
 		},
 
 		jshint: {
@@ -33,28 +51,43 @@ module.exports = function (grunt) {
 				"_": true,
 				"angular": true
 			},
-			all: ['src/core/*.js', 'src/adapters/*.js']
+			all: ['src/**/*.js']
 		},
 
 		concat: {
-			options: {
-				stripBanners: true
-			},
 			ng: {
-				src: ['src/<%=meta.src_core%>', 'src/<%=meta.src_adapt_ng%>'],
+				options: {
+					stripBanners: true,
+					banner: '<%= meta.banner %>'
+				},
+				src: ['<%=meta.src_core_build%>', '<%=meta.src_adapt_ng%>'],
 				dest: 'build/angular/statify-ng.js'
 			},
 			jquery: {
-				src: ['src/<%=meta.src_core%>', 'src/<%=meta.src_adapt_$%>'],
-				dest: 'build/jquery/statify-$.js'
+				options: {
+					stripBanners: true,
+					banner: '<%= meta.banner %>'
+				},
+				src: ['<%=meta.src_core_build%>', '<%=meta.src_adapt_$%>'],
+				dest: 'build/jquery/statify-$.js',
+
 			},
 			bb: {
-				src: ['src/<%=meta.src_core%>', 'src/<%=meta.src_adapt_bb%>'],
+				options: {
+					stripBanners: true,
+					banner: '<%= meta.banner %>'
+				},
+				src: ['<%=meta.src_core_build%>', '<%=meta.src_adapt_bb%>'],
 				dest: 'build/backbone/statify-backbone.js'
-			}
+			},
+
 
 		},
 		uglify: {
+			options: {
+				stripBanners: true,
+				banner: '<%= meta.banner %>'
+			},
 			all: {
 				files: {
 					'build/jquery/statify-$.min.js': ['build/jquery/statify-$.js'],
@@ -66,31 +99,32 @@ module.exports = function (grunt) {
 
 		jasmine: {
 			jq: {
-				src: ['src/<%=meta.src_core%>', 'src/<%=meta.src_adapt_$%>'],
+				src: ['<%=meta.src_core%>', '<%=meta.src_adapt_$%>'],
 				options: {
 					vendor: '<%=meta.jq_lib%>',
-					specs: 'test/statify-core-specs.js',
+					specs: ['test/statify-common-specs.js','test/statify-$-specs.js'],
 					styles: 'test/statify-specs.css'
+					
 				}
 
 			},
 			bb: {
-				src: ['src/<%=meta.src_core%>', 'src/<%=meta.src_adapt_bb%>'],
+				src: ['<%=meta.src_core%>', '<%=meta.src_adapt_bb%>'],
 				options: {
 					vendor: ['<%=meta.jq_lib%>', '<%=meta.under_lib%>', '<%=meta.bb_lib%>'],
-					specs: 'test/statify-core-specs.js',
+					specs: 'test/statify-common-specs.js',
 					styles: 'test/statify-specs.css'
 				}
 
 			},
 
 			ng: {
-				src: ['src/<%=meta.src_core%>', 'src/<%=meta.src_adapt_ng%>'],
+				src: ['<%=meta.src_core%>', '<%=meta.src_adapt_ng%>'],
 				options: {
 					vendor: ['<%=meta.ng_lib%>'],
-					specs: 'test/statify-core-specs.js',
+					specs: 'test/statify-ng-specs.js',
 					styles: 'test/statify-specs.css',
-					keepRunner: true
+					keepRunner:true
 				}
 
 			}
@@ -98,7 +132,7 @@ module.exports = function (grunt) {
 
 
 		jsbeautifier: {
-			files: ['src/core/*.js', 'src/adapters/*.js']
+			files: ['src/**/*.js']
 		},
 
 		clean: ["build"]
@@ -106,12 +140,6 @@ module.exports = function (grunt) {
 	});
 
 
-
-
-	grunt.registerTask('spec', ['jasmine']);
-	grunt.registerTask('pack', ['jsbeautifier', 'clean', 'concat', 'uglify']);
-	grunt.registerTask('release', ['jsbeautifier', 'jshint', 'jasmine', 'clean', 'concat', 'uglify']);
-	grunt.registerTask('format', 'jsbeautifier');
-	grunt.registerTask('default', ['jshint', 'jasmine:jq']);
-	grunt.registerTask('hint', ['jshint']);
+	grunt.registerTask('release', ['jsbeautifier', 'jshint', 'jasmine', 'clean', 'string-replace', 'concat', 'uglify']);
+	grunt.registerTask('default', ['jshint', 'jasmine']);
 };

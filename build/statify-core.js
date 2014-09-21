@@ -277,12 +277,16 @@ var statify = (function(root) {
                 if (originalDisplay) this.display.yes = originalDisplay;
             }
 
-            this.ensure();
+            this.configure();
         };
 
         ViewStateElement.prototype = {
-            ensure: function() {
-                if (this.$el.attr("class") === void 0) throw new Error(this.$el.selector + " element(s) must have at least a base style class");
+            configure: function() {
+                if (this.$el.attr("class") === void 0) {
+                    this.hasDeclaredStyle = false;
+                    return;
+                }
+                this.hasDeclaredStyle = true;
                 this.baseStyle = this.$el.attr("class").split(" ").pop();
             },
 
@@ -295,16 +299,19 @@ var statify = (function(root) {
             },
 
             removeStateStyle: function(state) {
+                if (!this.hasDeclaredStyle) return;
                 var style = this.baseStyle + _config.cssModifier + state;
                 if (style && this.$el.hasClass(style)) this.$el.removeClass(style);
             },
 
             addStateStyle: function(state) {
+                if (!this.hasDeclaredStyle) return;
                 var selector = this.getStyleSelector(state);
                 if (_CSS.hasRule(selector)) this.$el.addClass(selector.replace(".", ""));
             },
 
             getStyleSelector: function(state) {
+                if (!this.hasDeclaredStyle) return null;
                 return "." + this.baseStyle + _config.cssModifier + state;
             }
 

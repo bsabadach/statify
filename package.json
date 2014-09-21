@@ -1,6 +1,6 @@
 {
   "name": "statify",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "a javascript library to make your html ui components statefull",
   "keywords": [
     "finite state machine",

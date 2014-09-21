@@ -69,7 +69,7 @@ module.exports = function (grunt) {
 					banner: '<%= meta.banner %>'
 				},
 				src: ['<%=meta.src_core_build%>', '<%=meta.src_adapt_$%>'],
-				dest: 'build/jquery/statify-$.js',
+				dest: 'build/jquery/statify-jquery.js',
 
 			},
 			bb: {
@@ -90,7 +90,7 @@ module.exports = function (grunt) {
 			},
 			all: {
 				files: {
-					'build/jquery/statify-$.min.js': ['build/jquery/statify-$.js'],
+					'build/jquery/statify-jquery.min.js': ['build/jquery/statify-jquery.js'],
 					'build/backbone/statify-backbone.min.js': ['build/backbone/statify-backbone.js'],
 					'build/angular/statify-ng.min.js': ['build/angular/statify-ng.js']
 				}

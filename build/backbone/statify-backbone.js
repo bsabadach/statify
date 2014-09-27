@@ -1,5 +1,5 @@
 //
-// statify - v0.2.0
+// statify - v0.2.1
 // The MIT License
 // Copyright (c) 2014 Boris Sabadach <boris@washmatique.fr> 
 //
@@ -884,7 +884,6 @@ var statify = (function(root) {
         };
 
         var trigger = function(event, stateName) {
-            core._debug(this.$el + " " + (event.type || event) + " " + stateName);
             var _ = core._,
                 fn = this.$el[_config.triggerFn];
             if (!_.isFunction(fn)) {

@@ -94,11 +94,11 @@
     /**
      * Link function for data-states directive: states are initialized here
      */
-    function statesClientDirectiveLink(scope, element, attrs, statesCtrl) {
+    function statesClientDirectiveLink(scope, el, attrs, statesCtrl) {
         var statesClient = scope;
         statesClient.options.names = attrs.states;
         statesClient.options.initialState = statesClient.options.names.split(',')[0];
-        statesClient.$el = element;
+        statesClient.$el = angular.element(el);
         statesClient.statesOptions = {};
         statesClient.initializeStates();
 

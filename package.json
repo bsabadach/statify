@@ -2,18 +2,12 @@
 	"name": "statify",
 	"version": "0.2.1",
 	"description": "a javascript library to make your html ui components statefull",
-	"keywords": [
-    "finite state machine",
-    "view states"
-  ],
+	"keywords": ["finite state machine", "view states"],
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/bsabadach/statify"
 	},
 	"author": "Boris Sabadach, <boris@washmatique.fr>",
-	"dependencies": {
-		"jquery": ">=1.7.1"
-	},
 	"scripts": {
 		"test": "grunt default"
 	},

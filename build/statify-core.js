@@ -15,7 +15,7 @@ var statify = (function(root) {
     // configuration
     //-------------------------------------
 
-    core.VERSION = "0.1.0";
+    core.VERSION = "0.2.1";
 
 
     core.ns = "washm.statify";

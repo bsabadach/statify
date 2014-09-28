@@ -1,5 +1,5 @@
 //
-// statify - v0.2.1
+// statify - v0.2.2
 // The MIT License
 // Copyright (c) 2014 Boris Sabadach <boris@washmatique.fr> 
 //
@@ -19,7 +19,7 @@ var statify = (function(root) {
     // configuration
     //-------------------------------------
 
-    core.VERSION = "0.2.1";
+    core.VERSION = "0.2.2";
 
 
     core.ns = "washm.statify";
@@ -141,7 +141,7 @@ var statify = (function(root) {
                 var _ = core._,
                     selectors = rule.selectorText.split(",");
                 return !!_.find(selectors, function(aSelectorText) {
-                    return aSelectorText.trim() === selectorText;
+                    return aSelectorText.trim().indexOf(selectorText) !== -1;
                 });
             },
 

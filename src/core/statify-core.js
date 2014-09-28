@@ -137,7 +137,7 @@ var statify = (function(root) {
                 var _ = core._,
                     selectors = rule.selectorText.split(",");
                 return !!_.find(selectors, function(aSelectorText) {
-                    return aSelectorText.trim() === selectorText;
+                    return aSelectorText.trim().indexOf(selectorText) !== -1;
                 });
             },
 

@@ -96,13 +96,13 @@ Choose among the [statify implementation](https://github.com/bsabadach/statify/t
 ##### Initializing states
 once your DOM is loaded create the state machine object:
 
-####### with jQuery
+#######with jQuery
 
     var stateClientView = $(unique-element-selector).statify().statified();
 
-####### with Backbone
+#######with Backbone
      var stateClientView= new Backbone.StatesClientView({
-          el:'unique-element-selector'
+          el:'unique-element-selector',
       });
  or u can create a state client view from your own base view:
 
@@ -110,7 +110,7 @@ once your DOM is loaded create the state machine object:
 and instantiate it as previously described.
 
 
-###### with angular
+######with angular
 create an app with the statify dependency: it loads all the directives needed:
 
     var app = angular.module('myApp', ['statify-ng']); 
@@ -118,10 +118,10 @@ create an app with the statify dependency: it loads all the directives needed:
 
 ##### changing the state
 
-####### with jQuery or Backbone
+#######with jQuery or Backbone
     stateClientView.setState('statename');
 
-####### with angular
+#######with angular
 the library added a setState method on the parent scope of the container using the statify directives. For instance you can add a button that does the trick
 
         <div class="state-container" data-states="A,B,C">
@@ -151,9 +151,9 @@ override the onStateEvent function on the state client
 extend and override the onStateEvent function
 ```javascript
     var MyStateClientView=Backbone.StatesClientView.extend({ 
-    onStateEvent=function(eventType,stateName){
-            // do what you want
-        }
+    		onStateEvent=function(eventType,stateName){
+            	// do what you want
+        	}
     );
 ```
 Then instantiate your view.

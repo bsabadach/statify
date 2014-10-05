@@ -1,5 +1,6 @@
 #statify.js
 
+documentation still in progress
 
 [![Build Status](https://travis-ci.org/bsabadach/statify.png?branch=master)](https://travis-ci.org/bsabadach/statify)
 

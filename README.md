@@ -195,3 +195,6 @@ Here is how it could look like:
                  data-states-reverseTrans >
             ....
             </div>
+
+# Examples:
+https://embed.plnkr.co/FgXZE4/

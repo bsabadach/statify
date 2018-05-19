@@ -198,3 +198,4 @@ Here is how it could look like:
 
 # Examples:
 [View stack navigator (angular)](https://embed.plnkr.co/FgXZE4/)
+[Accordion component (backbone)] (http://embed.plnkr.co/KjEuIO/)

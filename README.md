@@ -197,4 +197,4 @@ Here is how it could look like:
             </div>
 
 # Examples:
-[View stack navigator](https://embed.plnkr.co/FgXZE4/)
+[View stack navigator (angular)](https://embed.plnkr.co/FgXZE4/)

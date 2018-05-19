@@ -197,4 +197,4 @@ Here is how it could look like:
             </div>
 
 # Examples:
-https://embed.plnkr.co/FgXZE4/
+[![View stack navigator](https://embed.plnkr.co/FgXZE4/)
